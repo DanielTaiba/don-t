@@ -1,0 +1,6 @@
+env/
+.env
+info/csv
+info/csv/*
+info/responsesJson
+info/responsesJson/*

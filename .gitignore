@@ -1,6 +1,9 @@
 env/
 .env
-info/csv
-info/csv/*
-info/responsesJson
-info/responsesJson/*
+src/csv
+src/csv/*
+src/responsesJson
+src/responsesJson/*
+src/__pycache__
+docker/common.env
+docker/data

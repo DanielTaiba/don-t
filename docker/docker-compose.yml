@@ -1,0 +1,24 @@
+version: '3.9'
+
+services:
+
+  db:
+    image: postgres:14
+    container_name: cryptual_psql
+    restart: always
+    env_file: common.env
+    networks:
+      db_net:
+        ipv4_address: 172.19.0.2
+    ports: 
+      - 5432:5423
+    volumes:
+      - ./data:/var/lib/postgresql/data
+
+
+networks:
+  db_net:
+    ipam:
+        driver: default
+        config:
+          - subnet: "172.19.0.0/24"

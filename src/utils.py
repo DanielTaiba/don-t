@@ -31,6 +31,6 @@ def query(endpoint = '', parameters = {} ):
     print (f'error: {response.status_code}')
     exit()
 
-def writeResponses(self,response,fileName='test'):
-  with open(f'binance/responsesJson/{fileName}.json','w') as f:
+def writeResponses(response,fileName='test'):
+  with open(f'src/responsesJson/{fileName}.json','w') as f:
     json.dump(response.json(),f,indent=2)

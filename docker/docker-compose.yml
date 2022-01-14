@@ -5,7 +5,6 @@ services:
   db:
     image: postgres:14
     container_name: cryptual_psql
-    restart: always
     env_file: common.env
     networks:
       db_net:
@@ -14,7 +13,6 @@ services:
       - 5432:5423
     volumes:
       - ./data:/var/lib/postgresql/data
-
 
 networks:
   db_net:

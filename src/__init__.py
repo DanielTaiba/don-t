@@ -1,2 +1,2 @@
 from .binance import *
-from .db.postgresql import clientPsql
+from .db import *

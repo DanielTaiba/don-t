@@ -2,6 +2,7 @@ import psycopg2
 import os
 from os.path import join, dirname
 from dotenv import load_dotenv
+import pandas as pd
 
 class clientPsql():
   def __init__(self,db_name='postgres') -> None:
@@ -12,6 +13,7 @@ class clientPsql():
     self.user = os.environ.get('USER')
     self.password = os.environ.get('PASSWORD')
     self.db_name = db_name
+    self.columns = ['Open_time','Open','High','Low','Close','Volume','Close_Time','Quote_assets_volume','Number_of_trades','Taker_buy_base_asset_volume','Taker_buy_quote_asset_volume','Ignore']
 
   def connect(fnc):
     def wrapper(self,**kwargs):
@@ -25,7 +27,7 @@ class clientPsql():
         fnc(self,connector,**kwargs)
       
       except (Exception, psycopg2.DatabaseError) as e:
-        print (e)
+        print ('connect..',e)
         connector=None
       
       finally:
@@ -95,10 +97,24 @@ class clientPsql():
       cur.close()
     except Exception as e:
       print('create table ...',e)
-  
+
   @connect
-  def insert_data(self,connector):
-    pass
+  def insert_data(self,connector,schema =str(),table_name = str(),df = pd.DataFrame() ):
+    initial_query = f""" INSERT INTO {schema}.{table_name} 
+    ({",".join(self.columns)})
+    VALUES
+    """
+    values_query = ','.join([f"({','.join(rows.values)})" for _,rows in df.iterrows()])
+
+    query = initial_query + values_query
+
+    try:
+      cur = connector.cursor()
+      cur.execute(query)
+      connector.commit()
+      cur.close()
+    except Exception as e:
+      print('insert data ...',e)
 
   @connect
   def extract_data(self,connector):

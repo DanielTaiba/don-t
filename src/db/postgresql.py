@@ -2,26 +2,25 @@ import psycopg2
 import os
 from os.path import join, dirname
 from dotenv import load_dotenv
-import pandas as pd
 
 class clientPsql():
   def __init__(self,db_name='postgres') -> None:
     dotenv_path = join(dirname(__file__), '.env')
     load_dotenv(dotenv_path)
 
-    self.host = os.environ.get('HOST')
-    self.user = os.environ.get('USER')
-    self.password = os.environ.get('PASSWORD')
+    self.__host = os.environ.get('HOST')
+    self.__user = os.environ.get('USER')
+    self.__password = os.environ.get('PASSWORD')
     self.db_name = db_name
-    self.columns = ['Open_time','Open','High','Low','Close','Volume','Close_Time','Quote_assets_volume','Number_of_trades','Taker_buy_base_asset_volume','Taker_buy_quote_asset_volume','Ignore']
+    self.columns = ['open_time','open_price','high_price','low_price','close_price','volume','close_time','quote_assets_volume','number_of_trades','taker_buy_base_asset_volume','taker_buy_quote_asset_volume','ignore']
 
   def connect(fnc):
     def wrapper(self,**kwargs):
       try:
         connector = psycopg2.connect(
-          host=self.host,
-          user=self.user,
-          password=self.password,
+          host=self.__host,
+          user=self.__user,
+          password=self.__password,
           database=self.db_name
           )
         fnc(self,connector,**kwargs)
@@ -70,22 +69,22 @@ class clientPsql():
       print('schema exist?', e)
 
   @connect
-  def create_table(self,connector, **kwargs):
+  def create_table(self,connector,**kwargs):
     # dataTypes: https://www.w3schools.com/sql/sql_datatypes.asp
-    query= f"""CREATE TABLE "{kwargs['schema']}"."{kwargs['interval']}" (
-      "Open_time" bigint not null ,
-      "Open" numeric ,
-      "High" numeric ,
-      "Low" numeric ,
-      "Close" numeric ,
-      "Volume" numeric ,
-      "Close_time" bigint not null,
-      "Quote_assets_volume" numeric ,
-      "Number_of_trades" int ,
-      "Taker_buy_base_asset_volume" numeric ,
-      "Taker_buy_quote_asset_volume" numeric ,
-      "Ignore" numeric ,
-      primary key ("Open_time")
+    query= f"""CREATE TABLE {kwargs['schema']}._{kwargs['table_name']} (
+      "open_time" bigint not null ,
+      "open_price" numeric ,
+      "high_price" numeric ,
+      "low_price" numeric ,
+      "close_price" numeric ,
+      "volume" numeric ,
+      "close_time" bigint not null,
+      "quote_assets_volume" numeric ,
+      "number_of_trades" int ,
+      "taker_buy_base_asset_volume" numeric ,
+      "taker_buy_quote_asset_volume" numeric ,
+      "ignore" numeric ,
+      primary key ("open_time")
       );
     """
     try:
@@ -98,24 +97,46 @@ class clientPsql():
     except Exception as e:
       print('create table ...',e)
 
+  def table_exist(self,connector,schema, table_name):
+    try:
+      cur = connector.cursor()
+      cur.execute(f"SELECT table_name FROM information_schema.tables WHERE table_schema = {schema} AND TABLE_NAME = _{table_name};")
+      if cur.fetchone() is not None:
+        connector.commit()
+        cur.close()
+        return True
+      else:
+        return False
+      
+    except Exception as e:
+      print('schema exist?', e)
+    pass
+
   @connect
-  def insert_data(self,connector,schema =str(),table_name = str(),df = pd.DataFrame() ):
-    initial_query = f""" INSERT INTO {schema}.{table_name} 
+  def insert_data(self,connector, **kwargs):
+    initial_query = f""" INSERT INTO {kwargs['schema']}._{kwargs['table_name']} 
     ({",".join(self.columns)})
     VALUES
     """
-    values_query = ','.join([f"({','.join(rows.values)})" for _,rows in df.iterrows()])
+    values_query = ','.join([f"({','.join(values)})" for values in kwargs['data']])+';'
 
     query = initial_query + values_query
 
     try:
+      if not self.table_exist(connector,kwargs['schema'],kwargs['table_name']):
+        self.create_table(connector,**kwargs)
       cur = connector.cursor()
       cur.execute(query)
       connector.commit()
       cur.close()
-    except Exception as e:
+    except (Exception, psycopg2.DatabaseError) as e:
       print('insert data ...',e)
+    
 
   @connect
   def extract_data(self,connector):
     pass
+
+
+if __name__=='__main__':
+  clientPsql(db_name='Binance').create_table(schema='btc_usdt',table_name='1d')

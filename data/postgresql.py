@@ -3,9 +3,41 @@ import os
 from os.path import join, dirname
 from dotenv import load_dotenv
 
+class waiterPsql():
+  def __init__(self) -> None:
+    dotenv_path = join(dirname(__file__), 'psql.env')
+    load_dotenv(dotenv_path)
+
+    self.__host = os.environ.get('HOST')
+    self.__user = os.environ.get('USER')
+    self.__password = os.environ.get('PASSWORD')
+
+  def connect(fnc):
+    def wrapper(self,**kwargs):
+      try:
+        connector = psycopg2.connect(
+          host=self.__host,
+          user=self.__user,
+          password=self.__password,
+          database=kwargs['db_name']
+          )
+        response = fnc(self,connector,**kwargs)
+      
+      except (Exception, psycopg2.DatabaseError) as e:
+        print ('connect..',e)
+        connector=None
+      
+      finally:
+        if connector is not None:
+          connector.close()
+        if response is not None:
+          return response
+        
+    return wrapper
+
 class clientPsql():
   def __init__(self,db_name='postgres') -> None:
-    dotenv_path = join(dirname(__file__), '.env')
+    dotenv_path = join(dirname(__file__), 'psql.env')
     load_dotenv(dotenv_path)
 
     self.__host = os.environ.get('HOST')
@@ -32,6 +64,7 @@ class clientPsql():
       finally:
         if connector is not None:
           connector.close()
+      
     
     return wrapper
 
@@ -118,13 +151,16 @@ class clientPsql():
     ({",".join(self.columns)})
     VALUES
     """
-    values_query = ','.join([f"({','.join(values)})" for values in kwargs['data']])+';'
+    values_query = ','.join([f"({','.join(values)})" for values in kwargs['data']])
 
-    query = initial_query + values_query
+    end_query = f""" ON DUPLICATE KEY UPDATE
+    {','.join([f'{colum} = values({colum})' for colum in self.columns])};
+    """
+    query = initial_query + values_query + ';'
 
     try:
-      if not self.table_exist(connector,kwargs['schema'],kwargs['table_name']):
-        self.create_table(connector,**kwargs)
+      #if not self.table_exist(connector,kwargs['schema'],kwargs['table_name']):
+        #self.create_table(connector,**kwargs)
       cur = connector.cursor()
       cur.execute(query)
       connector.commit()
@@ -134,9 +170,12 @@ class clientPsql():
     
 
   @connect
-  def extract_data(self,connector):
-    pass
+  def extract_data(self,connector,**kwargs):
+    
+    return connector
+    
+    
 
 
 if __name__=='__main__':
-  clientPsql(db_name='Binance').create_table(schema='btc_usdt',table_name='1d')
+  clientPsql(db_name='Binance').extract_data(schema='btc_usdt',table_name='1w')

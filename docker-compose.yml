@@ -1,18 +1,20 @@
 version: '3.9'
-
 services:
 
   db:
     image: postgres:14
     container_name: cryptual_psql
-    env_file: common.env
+    env_file: db.env
     networks:
       db_net:
-        ipv4_address: 172.19.0.2
+        ipv4_address: 172.19.0.1
     ports: 
       - 5432:5423
     volumes:
-      - ./data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
+  
+volumes:
+  postgres_data:
 
 networks:
   db_net:

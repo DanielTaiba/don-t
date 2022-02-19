@@ -1,8 +1,7 @@
-env/
+env_*/
 *.env
-src/csv
-src/csv/*
-src/responsesJson
-src/responsesJson/*
+csv/
+ResponsesJson/
 *__pycache__
 docker/data
+examples/

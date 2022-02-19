@@ -1,12 +1,11 @@
-from utils import query, writeResponses
-from db import clientPsql
+from .utils import query, writeResponses
+from .postgresql import clientPsql
 
 class marketBNB(object):
   def __init__(self) -> None:
     self.url = 'https://api.binance.com'
     self.init_timestamp = 1502668800000
     self.db_name = 'Binance'
-    self.columns = ['Open_time','Open','High','Low','Close','Volume','Close_Time','Quote_assets_volume','Number_of_trades','Taker_buy_base_asset_volume','Taker_buy_quote_asset_volume','Ignore']
 
   def exchange_info(self):
     endpoint = '/api/v3/exchangeInfo'
@@ -47,10 +46,10 @@ class marketBNB(object):
     for kline in args:
       kline[:] = map(str,kline[:])
 
-  def write_db(self,schema,interval,*data):
+  def write_db(self,schema,table_name,*data):
     kwargs={
       'schema':schema,
-      'table_name': interval,
+      'table_name': table_name,
       'data':data
     }
     psql = clientPsql(db_name=self.db_name)
@@ -61,6 +60,5 @@ if __name__=='__main__':
   #psql = clientPsql(db_name = 'Binance')
   #psql.test_connection()
   #psql.create_table(schema='btc_usdt',interval='1d')
-  marketBNB().save_klines(base_asset='eth',quote_asset='usdt',interval='1d')
+  marketBNB().save_klines(base_asset='btc',quote_asset='usdt',interval='1w')
   #marketBNB().exchange_info()
-  pass

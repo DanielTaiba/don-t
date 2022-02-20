@@ -1,1 +1,1 @@
-webapp ot data analysis and algorithmic thrading
+webapp to do data analysis and algorithmic trading

@@ -5,3 +5,5 @@ ResponsesJson/
 *__pycache__
 docker/data
 examples/
+sprint.md
+db.sqlite3

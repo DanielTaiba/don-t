@@ -3,13 +3,14 @@ services:
 
   db:
     image: postgres:14
-    container_name: cryptual_psql
+    container_name: don-t_psql
     env_file: db.env
     networks:
       db_net:
-        ipv4_address: 172.19.0.1
+        ipv4_address: 172.19.0.2
     ports: 
-      - 5432:5423
+      - 5432:5423 
+      - 5433:5433
     volumes:
       - postgres_data:/var/lib/postgresql/data
   

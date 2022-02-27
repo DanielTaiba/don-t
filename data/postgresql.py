@@ -147,8 +147,7 @@ class clientPsql():
 
   @connect
   def insert_data(self,connector, **kwargs):
-    self.select_last_time(kwargs)
-    initial_query = f""" INSERT INTO {kwargs['schema']}._{kwargs['table_name']} 
+    initial_query = f""" INSERT INTO {kwargs['schema']}.{kwargs['table_name']} 
     ({",".join(self.columns)})
     VALUES
     """
@@ -160,14 +159,35 @@ class clientPsql():
     query = initial_query + values_query + ';'
 
     try:
-      if not self.table_exist(connector,kwargs['schema'],kwargs['table_name']):
-        self.create_table(connector,**kwargs)
+      #if not self.table_exist(connector,kwargs['schema'],kwargs['table_name']):
+      #  self.create_table(connector,**kwargs)
       cur = connector.cursor()
       cur.execute(query)
       connector.commit()
       cur.close()
     except (Exception, psycopg2.DatabaseError) as e:
       print('insert data ...',e)
+  
+  @connect
+  def insert_symbols (self,connector,**kwargs):
+    initial_query = f""" INSERT INTO {kwargs['schema']}.{kwargs['table_name']} 
+    ({",".join(kwargs['columns'])})
+    VALUES
+    """
+    values_query = ','.join([f"""(\'{"','".join(values)}\')""" for values in kwargs['data']])
+    query = initial_query + values_query + ';'
+    try:
+      #if not self.table_exist(connector,kwargs['schema'],kwargs['table_name']):
+      #  self.create_table(connector,**kwargs)
+      cur = connector.cursor()
+      cur.execute(query)
+      connector.commit()
+      cur.close()
+    except (Exception, psycopg2.DatabaseError) as e:
+      print('insert symbol ...',e)
+
+  def update_data(self):
+    pass
   
   @connect
   def select_last_time(self,connector,**kwargs):

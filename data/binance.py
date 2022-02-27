@@ -1,6 +1,8 @@
-
 from postgresql import clientPsql
 import requests
+from utils import writeResponses
+import pandas as pd
+import json
 
 class marketBNB(object):
   def __init__(self) -> None:
@@ -42,8 +44,33 @@ class marketBNB(object):
   def exchange_info(self):
     endpoint = '/api/v3/exchangeInfo'
     response = self.query(endpoint=self.url+endpoint)
-    print(response.json())
+    #print(response.json())
     #writeResponses(response,fileName='ExchangeInfo')
+    return response.json()
+  
+  def parse_exchange_symbol(self,raw_symbols):
+    for symbol in raw_symbols:
+      del symbol['orderTypes']
+      del symbol['filters']
+      del symbol['permissions']
+      
+    df_symbol = pd.read_json(json.dumps(raw_symbols))
+    #df_symbol.to_csv('./responsesJson/symbols.csv')
+    #print (list(df_symbol.columns),list(df_symbol.values))
+
+    return df_symbol.columns,df_symbol.values
+  
+  def save_symbols(self):
+    # columns
+    # ['symbol', 'status', 'baseAsset', 'baseAssetPrecision', 'quoteAsset','quotePrecision', 'quoteAssetPrecision', 'baseCommissionPrecision',
+    #   'quoteCommissionPrecision', 'icebergAllowed', 'ocoAllowed',
+    #   'quoteOrderQtyMarketAllowed', 'isSpotTradingAllowed',
+    #   'isMarginTradingAllowed']
+    data = self.exchange_info()
+    columns,values = self.parse_exchange_symbol(data['symbols'])
+    columns = list(columns)
+    values = list(values.astype(str))
+    self.write_db('exchange_info','symbols',columns,*values )
 
   def klines(self,symbol = 'BTCUSDT', interval = '1d' ,**kwargs):
     endpoint = '/api/v3/klines'
@@ -72,26 +99,26 @@ class marketBNB(object):
     self.change_type(*data)
     #insert data in db
     schema = base_asset.lower()+'_'+quote_asset.lower()
-    self.write_db(schema,interval,*data)
+    self.write_db(schema,interval,self.columns,*data)
 
   def change_type(self,*args):
     for kline in args:
       kline[:] = map(str,kline[:])
 
-  def write_db(self,schema,table_name,*data):
+  def write_db(self,schema,table_name,columns,*data):
     kwargs={
       'schema':schema,
       'table_name': table_name,
       'data':data,
       'db_name':self.db_name,
-      'columns': self.columns
+      'columns': columns
     }
-    clientPsql().insert_data(**kwargs)
+    clientPsql().insert_symbols(**kwargs)
 
 
 if __name__=='__main__':
   #psql = clientPsql(db_name = 'Binance')
   #psql.test_connection()
   #psql.create_table(schema='btc_usdt',interval='1d')
-  marketBNB().save_klines(base_asset='btc',quote_asset='usdt',interval='1w')
-  #marketBNB().exchange_info()
+  #marketBNB().save_klines(base_asset='btc',quote_asset='usdt',interval='1w')
+  marketBNB().save_symbols()

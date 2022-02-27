@@ -32,5 +32,5 @@ def query(endpoint = '', parameters = {} ):
     exit()
 
 def writeResponses(response,fileName='test'):
-  with open(f'src/responsesJson/{fileName}.json','w') as f:
+  with open(f'./responsesJson/{fileName}.json','w') as f:
     json.dump(response.json(),f,indent=2)

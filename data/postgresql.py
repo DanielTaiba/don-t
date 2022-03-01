@@ -177,8 +177,6 @@ class clientPsql():
     values_query = ','.join([f"""(\'{"','".join(values)}\')""" for values in kwargs['data']])
     query = initial_query + values_query + ';'
     try:
-      #if not self.table_exist(connector,kwargs['schema'],kwargs['table_name']):
-      #  self.create_table(connector,**kwargs)
       cur = connector.cursor()
       cur.execute(query)
       connector.commit()

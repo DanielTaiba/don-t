@@ -7,3 +7,4 @@ docker/data
 examples/
 sprint.md
 db.sqlite3
+.ipynb_checkpoints
